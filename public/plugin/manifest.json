@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "Leboncoin Car Link Scraper",
+  "version": "1.0",
+  "permissions": ["activeTab", "scripting", "downloads"],
+  "host_permissions": ["<all_urls>", "http://www.leboncoin.fr/*", "https://www.leboncoin.fr/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "Scrape article links",
+    "default_icon": "icon.png"
+  },
+    "icons": {
+        "16": "icon.png",
+        "32": "icon.png",
+        "48": "icon.png",
+        "128": "icon.png"
+    },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}
