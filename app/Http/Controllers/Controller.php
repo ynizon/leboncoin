@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 
 class Controller
 {
-    private function getCars(Request $request)
+    private function getCars(Request $request, string $order = '', string $direction = 'desc')
     {
         $brand = $request->input("brand");
         $model = $request->input("model");
@@ -17,6 +17,11 @@ class Controller
         $max = $request->input("max");
         if ($min != '' && $max != ''){
             $cars = $cars->where("regdate",">=",$min)->where("regdate","<=",$max);
+        }
+
+        if ($order != '')
+        {
+            $cars = $cars->orderBy($order,$direction);
         }
         $cars = $cars->get();
 
@@ -87,8 +92,39 @@ class Controller
             }
         }
         $dates = json_encode($dates);
-        $cars = $this->getCars($request);
-        return view('graph', compact("cars","nb","min","max","dates","regdates","brand","model","brands","models"));
+
+        $cars = $this->getCars($request, 'mileage');
+        $colors = $this->generateGradientColors(count($cars));
+        $kms = [];
+        $indice = 0;
+        foreach ($cars as $car)
+        {
+            $kms[$car->mileage] = $colors[$indice];
+            $indice++;
+        }
+
+        $cars = $this->getCars($request, 'distance');
+        $colors = $this->generateGradientColors(count($cars));
+        $distances = [];
+        $indice = 0;
+        foreach ($cars as $car)
+        {
+            $distances[$car->distance] = $colors[$indice];
+            $indice++;
+        }
+
+        $cars = $this->getCars($request, 'price', 'desc');
+        $colors = $this->generateGradientColors(count($cars));
+        $prices = [];
+        $indice = 0;
+        foreach ($cars as $car)
+        {
+            $prices[$car->price] = $colors[$indice];
+            $indice++;
+        }
+
+        $cars = $this->getCars($request, 'price', 'asc');
+        return view('graph', compact("distances","prices", "kms","cars","nb","min","max","dates","regdates","brand","model","brands","models"));
     }
 
     public function save(Request $request)
@@ -202,5 +238,41 @@ class Controller
         };
 
         return response()->stream($callback, 200, $headers);
+    }
+
+    private function generateGradientColors($numColors) {
+        $colors = [];
+        $red = [139, 0, 0];       // Rouge foncé
+        $orange = [255, 140, 0];   // Orange
+        $green = [144, 238, 144];  // Vert clair
+
+        if ($numColors < 2) return ["rgba({$red[0]},{$red[1]},{$red[2]},0.5)"];
+
+        $steps1 = floor($numColors / 2); // Dégradé rouge → orange
+        $steps2 = $numColors - $steps1;  // Dégradé orange → vert
+
+        // Interpolation du rouge vers l'orange
+        for ($i = 0; $i < $steps1; $i++) {
+            $factor = $i / max(1, $steps1 - 1);
+            $color = $this->interpolateColor($red, $orange, $factor);
+            $colors[] = "rgba({$color[0]},{$color[1]},{$color[2]},0.5)";
+        }
+
+        // Interpolation de l'orange vers le vert
+        for ($i = 0; $i < $steps2; $i++) {
+            $factor = $i / max(1, $steps2 - 1);
+            $color = $this->interpolateColor($orange, $green, $factor);
+            $colors[] = "rgba({$color[0]},{$color[1]},{$color[2]},0.5)";
+        }
+
+        return $colors;
+    }
+
+    private function interpolateColor($color1, $color2, $factor) {
+        $result = [];
+        for ($j = 0; $j < 3; $j++) {
+            $result[$j] = round($color1[$j] + ($color2[$j] - $color1[$j]) * $factor);
+        }
+        return $result;
     }
 }

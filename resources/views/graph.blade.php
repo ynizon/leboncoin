@@ -3,7 +3,8 @@
         <form method="post" action="/save"  enctype="multipart/form-data">
             {{csrf_field()}}
             <div class="col-md-6 my-3">
-                <h4>{{count($cars)}}/{{$nb}} voitures en base</h4>
+                <h4>{{count($cars)}}/{{$nb}} voitures en base
+                <br/>(distance calculée depuis {{env("POSTCODE")}})</h4>
             </div>
             <div class="col-md-6">
                 <input type="file" name="file" style="display:inline"/>
@@ -76,13 +77,13 @@
                             <td>
                                 <a target="_blank" href="{{$car->url}}">{{$car->title}}</a>
                             </td>
-                            <td nowrap>
+                            <td nowrap style="background:{{$prices[$car->price]}}">
                                 {{$car->price}}
                             </td>
-                            <td nowrap>
+                            <td nowrap style="background:{{$kms[$car->mileage]}}">
                                 {{$car->mileage}}
                             </td>
-                            <td nowrap>
+                            <td nowrap style="background:{{$distances[$car->distance]}}">
                                 {{$car->distance}}
                             </td>
                             <td>
